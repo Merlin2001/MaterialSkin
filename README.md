@@ -10,7 +10,7 @@ Theming .NET WinForms, C# or VB.Net, to Google's Material Design Principles.
 ---
 
 #### Current state of the MaterialSkin components
- | Supported | Dark & light version | Disabled mode | Animated
+Component | Supported | Dark & light version | Disabled mode | Animated
 --- | --- | --- | --- | ---
 Checkbox | Yes | Yes | Yes | Yes 
 Divider | Yes | Yes | N/A | N/A 
@@ -94,6 +94,13 @@ End Class
 #### Material Design in WPF
 
 If you love .NET and Material Design, you should definitely check out [Material Design Xaml Toolkit](https://github.com/ButchersBoy/MaterialDesignInXamlToolkit) by ButchersBoy. It's a similar project but for WPF instead of WinForms.
+
+---
+
+
+#### State of the project
+
+This project is no longer under active development. Though, contributions are still welcome and the community will likely still help if you open an issue.
 
 ---
 

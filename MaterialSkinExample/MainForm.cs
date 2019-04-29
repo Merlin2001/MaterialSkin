@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Reflection;
-using System.Threading;
 using System.Windows.Forms;
 using MaterialSkin;
 using MaterialSkin.Controls;
@@ -70,6 +66,16 @@ namespace MaterialSkinExample
 					materialSkinManager.ColorScheme = new ColorScheme(Primary.Green600, Primary.Green700, Primary.Green200, Accent.Red100, TextShade.WHITE);
 					break;
 	        }
+        }
+
+        private void materialRaisedButton2_Click(object sender, EventArgs e)
+        {
+            materialProgressBar1.Value = Math.Min(materialProgressBar1.Value + 10, 100);
+        }
+
+        private void materialFlatButton4_Click(object sender, EventArgs e)
+        {
+            materialProgressBar1.Value = Math.Max(materialProgressBar1.Value - 10, 0);
         }
     }
 }

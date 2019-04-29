@@ -13,33 +13,46 @@ namespace MaterialSkin.Controls
         [Browsable(false)]
         public int Depth { get; set; }
         [Browsable(false)]
-        public MaterialSkinManager SkinManager { get { return MaterialSkinManager.Instance; } }
+        public MaterialSkinManager SkinManager => MaterialSkinManager.Instance;
         [Browsable(false)]
         public MouseState MouseState { get; set; }
         public bool Primary { get; set; }
 
-        private readonly AnimationManager animationManager;
-        private readonly AnimationManager hoverAnimationManager;
+        private readonly AnimationManager _animationManager;
+        private readonly AnimationManager _hoverAnimationManager;
 
-        private SizeF textSize;
+        private SizeF _textSize;
+
+        private Image _icon;
+        public Image Icon
+        {
+            get { return _icon; }
+            set
+            {
+                _icon = value;
+                if (AutoSize)
+                    Size = GetPreferredSize();
+                Invalidate();
+            }
+        }
 
         public MaterialFlatButton()
         {
             Primary = false;
 
-            animationManager = new AnimationManager(false)
+            _animationManager = new AnimationManager(false)
             {
                 Increment = 0.03,
                 AnimationType = AnimationType.EaseOut
             };
-            hoverAnimationManager = new AnimationManager
+            _hoverAnimationManager = new AnimationManager
             {
                 Increment = 0.07,
                 AnimationType = AnimationType.Linear
             };
 
-            hoverAnimationManager.OnAnimationProgress += sender => Invalidate();
-            animationManager.OnAnimationProgress += sender => Invalidate();
+            _hoverAnimationManager.OnAnimationProgress += sender => Invalidate();
+            _animationManager.OnAnimationProgress += sender => Invalidate();
 
             AutoSizeMode = AutoSizeMode.GrowAndShrink;
             AutoSize = true;
@@ -53,7 +66,7 @@ namespace MaterialSkin.Controls
             set
             {
                 base.Text = value;
-                textSize = CreateGraphics().MeasureString(value.ToUpper(), SkinManager.ROBOTO_MEDIUM_10);
+                _textSize = CreateGraphics().MeasureString(value.ToUpper(), SkinManager.ROBOTO_MEDIUM_10);
                 if (AutoSize)
                     Size = GetPreferredSize();
                 Invalidate();
@@ -69,17 +82,17 @@ namespace MaterialSkin.Controls
 
             //Hover
             Color c = SkinManager.GetFlatButtonHoverBackgroundColor();
-            using (Brush b = new SolidBrush(Color.FromArgb((int)(hoverAnimationManager.GetProgress() * c.A), c.RemoveAlpha())))
+            using (Brush b = new SolidBrush(Color.FromArgb((int)(_hoverAnimationManager.GetProgress() * c.A), c.RemoveAlpha())))
                 g.FillRectangle(b, ClientRectangle);
 
             //Ripple
-            if (animationManager.IsAnimating())
+            if (_animationManager.IsAnimating())
             {
                 g.SmoothingMode = SmoothingMode.AntiAlias;
-                for (int i = 0; i < animationManager.GetAnimationCount(); i++)
+                for (var i = 0; i < _animationManager.GetAnimationCount(); i++)
                 {
-                    var animationValue = animationManager.GetProgress(i);
-                    var animationSource = animationManager.GetSource(i);
+                    var animationValue = _animationManager.GetProgress(i);
+                    var animationSource = _animationManager.GetSource(i);
 
                     using (Brush rippleBrush = new SolidBrush(Color.FromArgb((int)(101 - (animationValue * 100)), Color.Black)))
                     {
@@ -89,7 +102,45 @@ namespace MaterialSkin.Controls
                 }
                 g.SmoothingMode = SmoothingMode.None;
             }
-			g.DrawString(Text.ToUpper(), SkinManager.ROBOTO_MEDIUM_10, Enabled ? (Primary ? SkinManager.ColorScheme.PrimaryBrush : SkinManager.GetPrimaryTextBrush()) : SkinManager.GetFlatButtonDisabledTextBrush(), ClientRectangle, new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
+
+            //Icon
+            var iconRect = new Rectangle(8, 6, 24, 24);
+
+            if (string.IsNullOrEmpty(Text))
+                // Center Icon
+                iconRect.X += 2;
+
+            if (Icon != null)
+                g.DrawImage(Icon, iconRect);
+
+            //Text
+            var textRect = ClientRectangle;
+
+            if (Icon != null)
+            {
+                //
+                // Resize and move Text container
+                //
+
+                // First 8: left padding
+                // 24: icon width
+                // Second 4: space between Icon and Text
+                // Third 8: right padding
+                textRect.Width -= 8 + 24 + 4 + 8;
+
+                // First 8: left padding
+                // 24: icon width
+                // Second 4: space between Icon and Text
+                textRect.X += 8 + 24 + 4;
+            }
+
+            g.DrawString(
+                Text.ToUpper(),
+                SkinManager.ROBOTO_MEDIUM_10,
+                Enabled ? (Primary ? SkinManager.ColorScheme.PrimaryBrush : SkinManager.GetPrimaryTextBrush()) : SkinManager.GetFlatButtonDisabledTextBrush(),
+                textRect,
+                new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }
+                );
         }
 
         private Size GetPreferredSize()
@@ -99,7 +150,15 @@ namespace MaterialSkin.Controls
 
         public override Size GetPreferredSize(Size proposedSize)
         {
-            return new Size((int) textSize.Width + 8, 36);
+            // Provides extra space for proper padding for content
+            var extra = 16;
+
+            if (Icon != null)
+                // 24 is for icon size
+                // 4 is for the space between icon & text
+                extra += 24 + 4;
+
+            return new Size((int)Math.Ceiling(_textSize.Width) + extra, 36);
         }
 
         protected override void OnCreateControl()
@@ -111,13 +170,13 @@ namespace MaterialSkin.Controls
             MouseEnter += (sender, args) =>
             {
                 MouseState = MouseState.HOVER;
-                hoverAnimationManager.StartNewAnimation(AnimationDirection.In);
+                _hoverAnimationManager.StartNewAnimation(AnimationDirection.In);
                 Invalidate();
             };
             MouseLeave += (sender, args) =>
             {
                 MouseState = MouseState.OUT;
-                hoverAnimationManager.StartNewAnimation(AnimationDirection.Out);
+                _hoverAnimationManager.StartNewAnimation(AnimationDirection.Out);
                 Invalidate();
             };
             MouseDown += (sender, args) =>
@@ -126,7 +185,7 @@ namespace MaterialSkin.Controls
                 {
                     MouseState = MouseState.DOWN;
 
-                    animationManager.StartNewAnimation(AnimationDirection.In, args.Location);
+                    _animationManager.StartNewAnimation(AnimationDirection.In, args.Location);
                     Invalidate();
                 }
             };
